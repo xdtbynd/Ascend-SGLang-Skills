@@ -1,0 +1,125 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Verification Config",
+    "description": "Configuration for Docker-based fix verification. The image is pre-built — pulled directly, no in-container install.",
+    "type": "object",
+    "required": [
+        "repo_url",
+        "branch_or_ref",
+        "test_case",
+        "expected_behavior",
+        "docker_image",
+        "build_command",
+        "timeout_seconds"
+    ],
+    "properties": {
+        "repo_url": {
+            "type": "string",
+            "description": "Full repository URL (HTTPS or SSH)",
+            "examples": ["https://github.com/sgl-project/sglang.git"]
+        },
+        "branch_or_ref": {
+            "type": "string",
+            "description": "Branch, tag, or commit SHA containing the fix",
+            "examples": ["fix/login-regression", "abc1234def"]
+        },
+        "test_case": {
+            "type": "string",
+            "description": "Test case identifier to run",
+            "examples": [
+                "tests/test_auth.py::test_login",
+                "python/sglang/test/test_xxx.py::test_case"
+            ]
+        },
+        "expected_behavior": {
+            "type": "string",
+            "description": "What the test output should contain when passing. Can be literal string or /regex/ pattern.",
+            "examples": ["1 passed", "PASSED", "/Tests:.*0 failed/"]
+        },
+        "docker_image": {
+            "type": "string",
+            "description": "Pre-built Docker image to pull. For SGLang defaults to lmsysorg/sglang:latest — all dependencies included.",
+            "default": "lmsysorg/sglang:latest",
+            "examples": [
+                "lmsysorg/sglang:latest",
+                "python:3.10-slim",
+                "node:18-alpine"
+            ]
+        },
+        "build_command": {
+            "type": "string",
+            "description": "Test command only — no install steps. The image already has all dependencies.",
+            "examples": [
+                "python -m pytest tests/test_auth.py::test_login -v",
+                "npx jest src/__tests__/login.test.ts --verbose"
+            ]
+        },
+        "failure_log": {
+            "type": "string",
+            "description": "The original failure log (from before the fix). Used to confirm the old error is gone.",
+            "default": ""
+        },
+        "timeout_seconds": {
+            "type": "integer",
+            "description": "Maximum runtime for the container before it is killed",
+            "default": 600,
+            "minimum": 30,
+            "maximum": 3600
+        },
+        "gpu_required": {
+            "type": "boolean",
+            "description": "Whether the test requires GPU/NPU access",
+            "default": false
+        },
+        "env_vars": {
+            "type": "object",
+            "description": "Additional environment variables to pass to the container",
+            "default": {},
+            "additionalProperties": { "type": "string" },
+            "examples": [{ "API_KEY": "test-key", "DEBUG": "true" }]
+        },
+        "ecosystem": {
+            "type": "string",
+            "description": "Auto-detected ecosystem. 'sglang' triggers SGLang test framework + lmsysorg/sglang:latest image.",
+            "enum": [
+                "sglang",
+                "python",
+                "node",
+                "go",
+                "rust",
+                "cpp",
+                "java",
+                "unknown"
+            ],
+            "default": "unknown"
+        },
+        "sglang_repo_path": {
+            "type": "string",
+            "description": "SGLang repo root on host (auto-detected via git rev-parse --show-toplevel). Used as Docker -v mount source.",
+            "examples": ["<detected at runtime>"]
+        },
+        "test_framework": {
+            "type": "string",
+            "description": "Specific test framework (auto-detected). For SGLang: pytest with test_utils.py integration.",
+            "enum": [
+                "pytest",
+                "jest",
+                "go_test",
+                "cargo_test",
+                "ctest",
+                "maven",
+                "sglang_test_utils",
+                "custom"
+            ],
+            "default": "custom"
+        },
+        "workspace_dir": {
+            "type": "string",
+            "description": "Absolute path to the workspace directory for outputs"
+        },
+        "resolved_docker_command": {
+            "type": "string",
+            "description": "The final docker pull + docker run command (filled by Step 1)"
+        }
+    }
+}
